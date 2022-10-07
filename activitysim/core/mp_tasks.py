@@ -1067,15 +1067,16 @@ def allocate_shared_shadow_pricing_buffers_choice():
 
     info("allocate_shared_shadow_pricing_buffers_choice")
 
-    shadow_pricing_choice_info = inject.get_injectable(
-        "shadow_pricing_choice_info", None
-    )
+    shadow_pricing_choice_info = inject.get_injectable("shadow_pricing_info", None)
 
     if shadow_pricing_choice_info is not None:
         from activitysim.abm.tables import shadow_pricing
 
-        shadow_pricing_buffers_choice = (
-            shadow_pricing.buffers_for_shadow_pricing_choice(shadow_pricing_choice_info)
+        # shadow_pricing_buffers_choice = (
+        #     shadow_pricing.buffers_for_shadow_pricing_choice(shadow_pricing_choice_info)
+        # )
+        shadow_pricing_buffers_choice = shadow_pricing.buffers_for_shadow_pricing(
+            shadow_pricing_choice_info
         )
     else:
         shadow_pricing_buffers_choice = {}
