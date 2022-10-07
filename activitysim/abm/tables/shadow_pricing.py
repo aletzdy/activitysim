@@ -673,6 +673,69 @@ def buffers_for_shadow_pricing(shadow_pricing_info):
     return data_buffers
 
 
+def buffers_for_shadow_pricing_choice(shadow_pricing_choice_info):
+    """
+    Same as above buffers_for_shadow_price function except now we need to store
+    the actual choices for the simulation based shadow pricing method
+
+    This allocates a multiprocessing.Array that can store the choice for each person
+    and then wraps a dataframe around it.  That means the dataframe can be shared
+    and accessed across all threads.
+    Parameters
+    ----------
+    shadow_pricing_info : dict
+    Returns
+    -------
+        data_buffers : dict {<model_selector> : <shared_data_buffer>}
+        dict of multiprocessing.Array keyed by model_selector
+          and wrapped in a pandas dataframe
+    """
+
+    dtype = shadow_pricing_choice_info["dtype"]
+    block_shapes = shadow_pricing_choice_info["block_shapes"]
+
+    data_buffers = {}
+
+    for block_key, block_shape in block_shapes.items():
+
+        # buffer_size must be int, not np.int64
+        buffer_size = util.iprod(block_shape)
+
+        csz = buffer_size * np.dtype(dtype).itemsize
+        logger.info(
+            "allocating shared shadow pricing buffer for choices %s %s buffer_size %s bytes %s (%s)"
+            % (block_key, buffer_size, block_shape, csz, util.GB(csz))
+        )
+
+        if np.issubdtype(dtype, np.int64):
+            typecode = ctypes.c_int64
+        else:
+            raise RuntimeError(
+                "buffer_for_shadow_pricing unrecognized dtype %s" % dtype
+            )
+
+        shared_data_buffer = multiprocessing.Array(typecode, buffer_size)
+
+        logger.info("buffer_for_shadow_pricing_choice added block %s" % block_key)
+
+        data_buffers[block_key + "_choice"] = shared_data_buffer
+
+        persons = inject.get_table("persons").to_frame()
+        sp_choice_df = persons.reset_index()["person_id"].to_frame()
+
+        # declare a shared Array with data from sp_choice_df
+        mparr = multiprocessing.Array(ctypes.c_double, sp_choice_df.values.reshape(-1))
+
+        # create a new df based on the shared array
+        shared_sp_choice_df = pd.DataFrame(
+            np.frombuffer(mparr.get_obj()).reshape(sp_choice_df.shape),
+            columns=sp_choice_df.columns,
+        )
+        data_buffers["shadow_price_choice_df"] = shared_sp_choice_df
+
+    return data_buffers
+
+
 def shadow_price_data_from_buffers(data_buffers, shadow_pricing_info, model_selector):
     """
 
@@ -918,6 +981,53 @@ def get_shadow_pricing_info():
     return shadow_pricing_info
 
 
+def get_shadow_pricing_choice_info():
+    """
+    return dict with info about dtype and shapes of desired and modeled size tables
+
+    block shape is (num_zones, num_segments + 1)
+
+
+    Returns
+    -------
+    shadow_pricing_info: dict
+        dtype: <sp_dtype>,
+        block_shapes: dict {<model_selector>: <block_shape>}
+    """
+
+    persons = inject.get_table("persons")
+    # size_terms = inject.get_injectable("size_terms")
+
+    shadow_settings = config.read_model_settings("shadow_pricing.yaml")
+
+    # shadow_pricing_models is dict of {<model_selector>: <model_name>}
+    shadow_pricing_models = shadow_settings.get("shadow_pricing_models", {})
+
+    blocks = OrderedDict()
+    for model_selector in shadow_pricing_models:
+
+        sp_rows = len(persons)
+        # sp_cols = len(size_terms[size_terms.model_selector == model_selector])
+
+        # extra tally column for TALLY_CHECKIN and TALLY_CHECKOUT semaphores
+        blocks[block_name(model_selector)] = (sp_rows, 2)
+
+    sp_dtype = np.int64
+    # sp_dtype = np.str
+
+    shadow_pricing_choice_info = {
+        "dtype": sp_dtype,
+        "block_shapes": blocks,
+    }
+
+    for k in shadow_pricing_choice_info:
+        logger.debug(
+            "shadow_pricing_choice_info %s: %s" % (k, shadow_pricing_choice_info.get(k))
+        )
+
+    return shadow_pricing_choice_info
+
+
 @inject.injectable(cache=True)
 def shadow_pricing_info():
 
@@ -926,3 +1036,13 @@ def shadow_pricing_info():
     logger.debug("loading shadow_pricing_info injectable")
 
     return get_shadow_pricing_info()
+
+
+@inject.injectable(cache=True)
+def shadow_pricing_choice_info():
+
+    # when multiprocessing with shared data mp_tasks has to call network_los methods
+    # get_shadow_pricing_info() and buffers_for_shadow_pricing()
+    logger.debug("loading shadow_pricing_choice_info injectable")
+
+    return get_shadow_pricing_choice_info()
