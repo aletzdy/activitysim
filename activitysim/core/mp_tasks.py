@@ -1067,9 +1067,10 @@ def allocate_shared_shadow_pricing_buffers_choice():
 
     info("allocate_shared_shadow_pricing_buffers_choice")
 
-    shadow_pricing_choice_info = inject.get_injectable(
-        "shadow_pricing_choice_info", None
-    )
+    # shadow_pricing_choice_info = inject.get_injectable(
+    #     "shadow_pricing_choice_info", None
+    # )
+    shadow_pricing_choice_info = None
 
     if shadow_pricing_choice_info is not None:
         from activitysim.abm.tables import shadow_pricing
@@ -1429,10 +1430,10 @@ def run_multiprocess(injectables):
     mem.trace_memory_info("allocate_shared_shadow_pricing_buffers.completed")
 
     # combine shared_shadow_pricing_buffers to pool choices across all processes
-    # t0 = tracing.print_elapsed_time()
-    # shared_data_buffers.update(allocate_shared_shadow_pricing_buffers_choice())
-    # t0 = tracing.print_elapsed_time("allocate shared shadow_pricing choice buffer", t0)
-    # mem.trace_memory_info("allocate_shared_shadow_pricing_buffers_choice.completed")
+    t0 = tracing.print_elapsed_time()
+    shared_data_buffers.update(allocate_shared_shadow_pricing_buffers_choice())
+    t0 = tracing.print_elapsed_time("allocate shared shadow_pricing choice buffer", t0)
+    mem.trace_memory_info("allocate_shared_shadow_pricing_buffers_choice.completed")
 
     # - mp_setup_skims
     if len(shared_data_buffers) > 0:
