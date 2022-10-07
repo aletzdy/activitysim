@@ -720,7 +720,7 @@ def buffers_for_shadow_pricing_choice(shadow_pricing_choice_info):
 
         data_buffers[block_key + "_choice"] = shared_data_buffer
 
-        # persons = inject.get_table("persons").to_frame()
+        persons = inject.get_table("persons").to_frame()
         # sp_choice_df = persons.reset_index()["person_id"].to_frame()
         sp_choice_df = pd.DataFrame()
         sp_choice_df["person_id"] = list(range(0, 200))
