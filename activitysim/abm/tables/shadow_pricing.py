@@ -996,32 +996,34 @@ def get_shadow_pricing_choice_info():
     """
 
     # persons = inject.get_table("persons")
+    # # size_terms = inject.get_injectable("size_terms")
 
-    # dummy terms
-    land_use = inject.get_table("land_use")
-    # size_terms = inject.get_injectable("size_terms")
+    # shadow_settings = config.read_model_settings("shadow_pricing.yaml")
 
-    shadow_settings = config.read_model_settings("shadow_pricing.yaml")
+    # # shadow_pricing_models is dict of {<model_selector>: <model_name>}
+    # shadow_pricing_models = shadow_settings.get("shadow_pricing_models", {})
 
-    # shadow_pricing_models is dict of {<model_selector>: <model_name>}
-    shadow_pricing_models = shadow_settings.get("shadow_pricing_models", {})
+    # blocks = OrderedDict()
+    # for model_selector in shadow_pricing_models:
 
+    #     sp_rows = len(persons)
+    #     # sp_cols = len(size_terms[size_terms.model_selector == model_selector])
+
+    #     # extra tally column for TALLY_CHECKIN and TALLY_CHECKOUT semaphores
+    #     blocks[block_name(model_selector)] = (sp_rows, 2)
+
+    # sp_dtype = np.int64
+    # # sp_dtype = np.str
+
+    # shadow_pricing_choice_info = {
+    #     "dtype": sp_dtype,
+    #     "block_shapes": blocks,
+    # }
     blocks = OrderedDict()
-    for model_selector in shadow_pricing_models:
-
-        # sp_rows = len(persons)
-        # dummy test of land use instead of persons
-        sp_rows = len(land_use)
-        # sp_cols = len(size_terms[size_terms.model_selector == model_selector])
-
-        # extra tally column for TALLY_CHECKIN and TALLY_CHECKOUT semaphores
-        blocks[block_name(model_selector)] = (sp_rows, 2)
-
-    sp_dtype = np.int64
-    # sp_dtype = np.str
-
+    blocks["workplace"] = (200, 2)
+    blocks["school"] = (200, 2)
     shadow_pricing_choice_info = {
-        "dtype": sp_dtype,
+        "dtype": np.int64,
         "block_shapes": blocks,
     }
 
