@@ -1001,7 +1001,6 @@ def get_shadow_pricing_choice_info():
     land_use = inject.get_table("land_use")
     # size_terms = inject.get_injectable("size_terms")
 
-
     shadow_settings = config.read_model_settings("shadow_pricing.yaml")
 
     # shadow_pricing_models is dict of {<model_selector>: <model_name>}
