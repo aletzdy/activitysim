@@ -995,8 +995,12 @@ def get_shadow_pricing_choice_info():
         block_shapes: dict {<model_selector>: <block_shape>}
     """
 
-    persons = inject.get_table("persons")
+    # persons = inject.get_table("persons")
+
+    # dummy terms
+    land_use = inject.get_table("land_use")
     # size_terms = inject.get_injectable("size_terms")
+
 
     shadow_settings = config.read_model_settings("shadow_pricing.yaml")
 
@@ -1006,7 +1010,9 @@ def get_shadow_pricing_choice_info():
     blocks = OrderedDict()
     for model_selector in shadow_pricing_models:
 
-        sp_rows = len(persons)
+        # sp_rows = len(persons)
+        # dummy test of land use instead of persons
+        sp_rows = len(land_use)
         # sp_cols = len(size_terms[size_terms.model_selector == model_selector])
 
         # extra tally column for TALLY_CHECKIN and TALLY_CHECKOUT semaphores
